@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { ReactComponent as MicrophoneIcon } from "./mic.svg";
 import "./App.css";
 import MicRecorder from "mic-recorder-to-mp3";
-import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
-import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
+import { Table, Thead, Tbody, Tr, Th, Td } from 'react-super-responsive-table';
+import 'react-super-responsive-table/dist/SuperResponsiveTableStyle.css';
+import Siriwave from 'react-siriwave';
+import ClickNHold from 'react-click-n-hold';
 
 const Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -97,32 +98,45 @@ function App() {
   const keys = Object.keys(list_of_objects);
 
   return (
-    <Table>
-      <Thead>
-        <Tr>
-          <Th>Object</Th>
-          <Th>Location</Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        {keys.map((item) => {
-          return (
-            <Tr key={item}>
-              <Td>{item}</Td>
-              <Td>{list_of_objects[item]}</Td>
-            </Tr>
-          );
-        })}
-      </Tbody>
-      <React.Fragment>
-        <button onClick={onStartRecording} disabled={listening}>
-          Start
-        </button>
-        <button onClick={onStopRecording} disabled={!listening}>
-          Stop
-        </button>
-      </React.Fragment>
-    </Table>
+      <div className="background table-properties">
+        <h1 className="title-header">LoKate</h1>
+          <div className="center-everything-pls block">
+            <Table className='table-of-objects'>
+              <Thead>
+                <Tr>
+                  <Th className="table-cell">Object</Th>
+                  <Th className="table-cell">Location</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+              {keys.map(item => {
+                return (
+                  <Tr key={item}>
+                    <Td className="table-cell">{item}</Td>
+                    <Td className="table-cell">{list_of_objects[item]}</Td>
+                  </Tr>
+                );
+              })}
+              </Tbody>
+            </Table>
+          </div>
+        <div className='block'>
+          <Siriwave style="ios9"></Siriwave>
+        </div>
+        <div className="block">
+          <React.Fragment >
+            <div className="record-section">
+              <ClickNHold
+                time={10} // Time to keep pressing. Default is 2
+                onStart={onStartRecording} // Start callback
+                onClickNHold={onStartRecording} //Timeout callback
+                onEnd={onStopRecording}> 
+                <button className='start-stop-buttons'>Click and hold</button> 
+              </ClickNHold>
+            </div>
+          </React.Fragment> 
+        </div>
+      </div>
   );
 }
 
