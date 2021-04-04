@@ -10,18 +10,23 @@ const Recorder = new MicRecorder({ bitRate: 128 });
 
 function App() {
   const [allowedMic, setAllowedMic] = useState(false);
-  const [blobUrl, setblobUrl] = useState("");
   const [listening, setlistening] = useState(false);
 
-  const [list_of_objects, set_list_of_objects] = useState({ 'House Keys': 'Living Room Table', 'Charger': 'Outlet near the fridge', 'Headphones': 'Desk in the bedroom' });
-  localStorage.setItem('list_of_objects', JSON.stringify(list_of_objects));
+  const existingData = localStorage.getItem("list_of_objects");
+
+  const [list_of_objects, set_list_of_objects] = useState(
+    existingData ? JSON.parse(existingData) : {}
+  );
+  // localStorage.setItem("list_of_objects", JSON.stringify(list_of_objects));
 
   React.useEffect(() => {
-    window.addEventListener('storage', () => {
-      set_list_of_objects(JSON.parse(localStorage.getItem('list_of_objects')) || {})   
+    window.addEventListener("storage", () => {
+      set_list_of_objects(
+        JSON.parse(localStorage.getItem("list_of_objects")) || {}
+      );
     });
-  }, [])
-  
+  }, []);
+
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({ audio: true })
@@ -47,13 +52,42 @@ function App() {
     Recorder.stop()
       .getMp3()
       .then(([buffer, blob]) => {
+        console.log(blob);
+        fetch("https://mighty-emu-61.loca.lt/input", {
+          method: "POST",
+          body: blob,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.type === "retrieval") {
+              let item = data.item;
+              console.log("Item key is this: " + item);
+              let correspondingLocation = JSON.parse(
+                window.localStorage.getItem("list_of_objects")
+              )[item];
+              console.log(correspondingLocation);
+            } else {
+              let item = data.item;
+              let location = data.location;
+              set_list_of_objects((list_of_objects) => {
+                const newObjects = { ...list_of_objects, [item]: location };
+                window.localStorage.setItem(
+                  "list_of_objects",
+                  JSON.stringify(newObjects)
+                );
+
+                return newObjects;
+              });
+            }
+          })
+          .catch((e) => console.error(e));
         const result = URL.createObjectURL(blob);
-        setblobUrl(result);
+        console.log(result);
       })
       .catch((e) => console.error(e));
   };
 
-  const keys = Object.keys(list_of_objects)
+  const keys = Object.keys(list_of_objects);
 
   return (
       <div className="background table-properties">
@@ -92,7 +126,6 @@ function App() {
                 <button className='start-stop-buttons'>Click and hold</button> 
               </ClickNHold>
             </div>
-            <audio src={blobUrl} control="controls" />
           </React.Fragment> 
         </div>
       </div>
@@ -100,4 +133,3 @@ function App() {
 }
 
 export default App;
-
