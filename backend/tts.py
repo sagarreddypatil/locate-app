@@ -18,7 +18,7 @@ tacotron = Tacotron.from_pretrained(
 # load cmudict and add pronunciation of PyTorch
 cmudict = load_cmudict()
 
-text = "Hello there, this is General Obi-Wan Kenobi of the Grand Army of the Republic."
+text = "Your glasses are in Bangladesh."
 
 # convert text to phone ids
 x = torch.LongTensor(text_to_id(text, cmudict)).unsqueeze(0).cuda()

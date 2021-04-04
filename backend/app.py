@@ -9,10 +9,7 @@ from pydub import AudioSegment
 
 from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
 
-import torch
-import soundfile as sf
-from univoc import Vocoder
-from tacotron import load_cmudict, text_to_id, Tacotron
+from gtts import gTTS
 
 from io import BytesIO
 
@@ -47,22 +44,9 @@ def extract_item_loc(sentence: str):
     return item.lower(), location.lower()
 
 
-vocoder = Vocoder.from_pretrained(
-    "https://github.com/bshall/UniversalVocoding/releases/download/v0.2/univoc-ljspeech-7mtpaq.pt"
-).cuda()
-tacotron = Tacotron.from_pretrained(
-    "https://github.com/bshall/Tacotron/releases/download/v0.1/tacotron-ljspeech-yspjx3.pt"
-).cuda()
-cmudict = load_cmudict()
-
-
-def do_tts(text: str):
-    x = torch.LongTensor(text_to_id(text, cmudict)).unsqueeze(0).cuda()
-    with torch.no_grad():
-        mel, _ = tacotron.generate(x)
-        wav, sr = vocoder.generate(mel.transpose(1, 2))
-
-    return wav, sr
+def do_tts(text: str, filename: str):
+    voice = gTTS(text)
+    voice.save(filename)
 
 
 @app.route("/input", methods=["POST"])
@@ -106,19 +90,24 @@ def process_input():
     return jsonify(response)
 
 
-@app.route("/tts")
+@app.route("/tts", methods=["POST"])
 def tts():
     uid = f"tmp-send-{randint(0, 999999)}"
 
-    content = request.json["text"]
-    wav, sr = do_tts(content)
+    content = request.json
+    if content is None:
+        return "Dude what the hell"
 
-    sf.write(f"{uid}.wav", wav, sr)
-    with open(f"{uid}.wav", "rb") as file:
-        wav_file = file.read()
-    os.remove(f"{uid}.wav")
+    text = content["text"]
+    print(f"TTS Request: {text}")
+    do_tts(text, f"{uid}.mp3")
 
-    return send_file(BytesIO(wav_file), mimetype="audio/wav")
+    with open(f"{uid}.mp3", "rb") as file:
+        mp3_file = file.read()
+
+    os.remove(f"{uid}.mp3")
+
+    return send_file(BytesIO(mp3_file), mimetype="audio/mpeg")
 
 
 @app.route("/")
