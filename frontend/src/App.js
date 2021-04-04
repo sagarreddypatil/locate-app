@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import MicRecorder from "mic-recorder-to-mp3";
-import { Table, Thead, Tbody, Tr, Th, Td } from 'react-super-responsive-table';
-import 'react-super-responsive-table/dist/SuperResponsiveTableStyle.css';
-import Siriwave from 'react-siriwave';
-import ClickNHold from 'react-click-n-hold';
+import { Table, Thead, Tbody, Tr, Th, Td } from "react-super-responsive-table";
+import "react-super-responsive-table/dist/SuperResponsiveTableStyle.css";
+import Siriwave from "react-siriwave";
+import ClickNHold from "react-click-n-hold";
 
 const Recorder = new MicRecorder({ bitRate: 128 });
+const serverUrl = "https://rotten-fly-35.loca.lt/";
 
 function App() {
   const [allowedMic, setAllowedMic] = useState(false);
   const [listening, setlistening] = useState(false);
+  // const [bloburl, setbloburl] = useState("");
+  // const audioRef = useRef(null);
 
   const existingData = localStorage.getItem("list_of_objects");
 
@@ -53,7 +56,7 @@ function App() {
       .getMp3()
       .then(([buffer, blob]) => {
         console.log(blob);
-        fetch("https://mighty-emu-61.loca.lt/input", {
+        fetch(`${serverUrl}/input`, {
           method: "POST",
           body: blob,
         })
@@ -66,14 +69,27 @@ function App() {
                 window.localStorage.getItem("list_of_objects")
               )[item];
               console.log(correspondingLocation);
-              fetch("https://mighty-emu-61.loca.lt/tts", {
-                method: "GET",
+              let text = `Your ${item} is located in ${correspondingLocation}.`;
+              if (!correspondingLocation) {
+                text = `${item} could not be found.`;
+              }
+              fetch(`${serverUrl}/tts`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
                 body: JSON.stringify({
-                  text: `${item}'s location is ${correspondingLocation}`,
+                  text,
                 }),
               })
                 .then((response) => response.blob())
-                .then((blob) => {});
+                .then((blob) => {
+                  const ttsBlobUrl = URL.createObjectURL(blob);
+                  console.log(ttsBlobUrl);
+                  // setbloburl(ttsBlobUrl);
+                  const player = new Audio(ttsBlobUrl);
+                  player.play();
+                });
             } else {
               let item = data.item;
               let location = data.location;
@@ -98,45 +114,46 @@ function App() {
   const keys = Object.keys(list_of_objects);
 
   return (
-      <div className="background table-properties">
-        <h1 className="title-header">LoKate</h1>
-          <div className="center-everything-pls block">
-            <Table className='table-of-objects'>
-              <Thead>
-                <Tr>
-                  <Th className="table-cell">Object</Th>
-                  <Th className="table-cell">Location</Th>
+    <div className="background table-properties">
+      <h1 className="title-header">LoKate</h1>
+      <div className="center-everything-pls block">
+        <Table className="table-of-objects">
+          <Thead>
+            <Tr>
+              <Th className="table-cell">Object</Th>
+              <Th className="table-cell">Location</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {keys.map((item) => {
+              return (
+                <Tr key={item}>
+                  <Td className="table-cell">{item}</Td>
+                  <Td className="table-cell">{list_of_objects[item]}</Td>
                 </Tr>
-              </Thead>
-              <Tbody>
-              {keys.map(item => {
-                return (
-                  <Tr key={item}>
-                    <Td className="table-cell">{item}</Td>
-                    <Td className="table-cell">{list_of_objects[item]}</Td>
-                  </Tr>
-                );
-              })}
-              </Tbody>
-            </Table>
-          </div>
-        <div className='block'>
-          <Siriwave style="ios9"></Siriwave>
-        </div>
-        <div className="block">
-          <React.Fragment >
-            <div className="record-section">
-              <ClickNHold
-                time={10} // Time to keep pressing. Default is 2
-                onStart={onStartRecording} // Start callback
-                onClickNHold={onStartRecording} //Timeout callback
-                onEnd={onStopRecording}> 
-                <button className='start-stop-buttons'>Click and hold</button> 
-              </ClickNHold>
-            </div>
-          </React.Fragment> 
-        </div>
+              );
+            })}
+          </Tbody>
+        </Table>
       </div>
+      <div className="block">
+        <Siriwave style="ios9"></Siriwave>
+      </div>
+      <div className="block">
+        <React.Fragment>
+          <div className="record-section">
+            <ClickNHold
+              time={10} // Time to keep pressing. Default is 2
+              onStart={onStartRecording} // Start callback
+              onClickNHold={onStartRecording} //Timeout callback
+              onEnd={onStopRecording}
+            >
+              <button className="start-stop-buttons">Click and hold</button>
+            </ClickNHold>
+          </div>
+        </React.Fragment>
+      </div>
+    </div>
   );
 }
 
