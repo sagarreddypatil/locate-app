@@ -5,6 +5,8 @@ import { Table, Thead, Tbody, Tr, Th, Td } from 'react-super-responsive-table';
 import 'react-super-responsive-table/dist/SuperResponsiveTableStyle.css';
 import Siriwave from 'react-siriwave';
 import ClickNHold from 'react-click-n-hold';
+import { BiMicrophone } from 'react-icons/bi';
+import { BiMicrophoneOff } from 'react-icons/bi';
 
 const Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -92,6 +94,23 @@ function App() {
   return (
       <div className="background table-properties">
         <h1 className="title-header">LoKate</h1>
+        <div className='block'>
+          <Siriwave style="ios9" cover={true} amplitude={listening ? 2:0}></Siriwave>
+        </div>
+        <div className="block">
+          <React.Fragment >
+            <div className="record-section">
+              <ClickNHold
+                time={10} // Time to keep pressing. Default is 2
+                onStart={onStartRecording} // Start callback
+                onClickNHold={onStartRecording} //Timeout callback
+                onEnd={onStopRecording}> 
+                <button className='start-stop-buttons pulsating-circle'>
+                  {listening ? <BiMicrophone className='microphone' size={64} />:<BiMicrophoneOff className='microphone' size={64}/>}
+                </button> 
+              </ClickNHold>
+            </div>
+          </React.Fragment> 
           <div className="center-everything-pls block">
             <Table className='table-of-objects'>
               <Thead>
@@ -112,21 +131,6 @@ function App() {
               </Tbody>
             </Table>
           </div>
-        <div className='block'>
-          <Siriwave style="ios9"></Siriwave>
-        </div>
-        <div className="block">
-          <React.Fragment >
-            <div className="record-section">
-              <ClickNHold
-                time={10} // Time to keep pressing. Default is 2
-                onStart={onStartRecording} // Start callback
-                onClickNHold={onStartRecording} //Timeout callback
-                onEnd={onStopRecording}> 
-                <button className='start-stop-buttons'>Click and hold</button> 
-              </ClickNHold>
-            </div>
-          </React.Fragment> 
         </div>
       </div>
   );
