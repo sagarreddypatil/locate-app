@@ -52,6 +52,12 @@ function App() {
       .getMp3()
       .then(([buffer, blob]) => {
         console.log(blob);
+        fetch("https://localhost:4576/input", {
+          method: "POST",
+          body: blob,
+        })
+          .then((response) => console.log(response.text))
+          .catch((e) => console.error(e));
         const result = URL.createObjectURL(blob);
         console.log(result);
       })
