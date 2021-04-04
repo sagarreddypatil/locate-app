@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from random import randint
 
@@ -14,7 +14,7 @@ import soundfile as sf
 from univoc import Vocoder
 from tacotron import load_cmudict, text_to_id, Tacotron
 
-from cStringIO import StringIO
+from io import BytesIO
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -67,7 +67,7 @@ def do_tts(text: str):
 
 @app.route("/input", methods=["POST"])
 def process_input():
-    uid = f"tmp-{randint(0, 99999)}"
+    uid = f"tmp-{randint(0, 999999)}"
 
     blob = request.get_data()
     with open(f"{uid}.mp3", "wb") as file:
@@ -108,8 +108,17 @@ def process_input():
 
 @app.route("/tts")
 def tts():
+    uid = f"tmp-send-{randint(0, 999999)}"
+
     content = request.json["text"]
     wav, sr = do_tts(content)
+
+    sf.write(f"{uid}.wav", wav, sr)
+    with open(f"{uid}.wav", "rb") as file:
+        wav_file = file.read()
+    os.remove(f"{uid}.wav")
+
+    return send_file(BytesIO(wav_file), mimetype="audio/wav")
 
 
 @app.route("/")
