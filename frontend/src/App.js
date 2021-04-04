@@ -85,7 +85,6 @@ function App() {
         <button onClick={onStopRecording} disabled={!listening}>
           Stop
         </button>
-        <audio src={blobUrl} control="controls" />
       </React.Fragment>
     </Table>
   );
