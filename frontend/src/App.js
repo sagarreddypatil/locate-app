@@ -69,7 +69,7 @@ function App() {
                 window.localStorage.getItem("list_of_objects")
               )[item];
               console.log(correspondingLocation);
-              let text = `Your ${item} is located in ${correspondingLocation}.`;
+              let text = `${item} is located in ${correspondingLocation}.`;
               if (!correspondingLocation) {
                 text = `${item} could not be found.`;
               }
