@@ -24,9 +24,9 @@ sr.AudioFile("wow")
 
 
 model = AutoModelForQuestionAnswering.from_pretrained(
-    "distilbert-base-uncased-distilled-squad"
+    "distilbert-base-cased-distilled-squad"
 )
-tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-distilled-squad")
+tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
 qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
 item_stopwords = ["my", "the", "a"]
 
@@ -49,6 +49,19 @@ def do_tts(text: str, filename: str):
     voice.save(filename)
 
 
+def text_is_question(text: str):
+    query = text.lower()
+    if (
+        query.startswith("what")
+        or query.startswith("where")
+        or query.startswith("which")
+        or query.startswith("why")
+        or query.startswith("how")
+    ):
+        return True
+    return False
+
+
 @app.route("/input", methods=["POST"])
 def process_input():
     uid = f"tmp-{randint(0, 999999)}"
@@ -62,14 +75,16 @@ def process_input():
 
     with sr.AudioFile(f"{uid}.wav") as source:
         audio = recognizer.record(source)
-        input_trascription = recognizer.recognize_google(audio).lower()
+        input_trascription = recognizer.recognize_google(audio)
 
     item, location = extract_item_loc(input_trascription)
     item = normalize_item(item)
 
     response = {}
 
-    if input_trascription.split()[0].strip().lower() == "where":
+    if input_trascription.split()[0].strip().lower().startswith(
+        "where"
+    ) or text_is_question(location):
         response = {
             "type": "retrieval",
             "transcription": input_trascription,
