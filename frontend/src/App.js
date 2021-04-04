@@ -65,6 +65,14 @@ function App() {
                 window.localStorage.getItem("list_of_objects")
               )[item];
               console.log(correspondingLocation);
+              fetch("https://mighty-emu-61.loca.lt/tts", {
+                method: "GET",
+                body: JSON.stringify({
+                  text: `${item}'s location is ${correspondingLocation}`,
+                }),
+              })
+                .then((response) => response.blob())
+                .then((blob) => {});
             } else {
               let item = data.item;
               let location = data.location;
