@@ -7,7 +7,6 @@ const Recorder = new MicRecorder({ bitRate: 128 });
 
 function App() {
   const [allowedMic, setAllowedMic] = useState(false);
-  const [blobUrl, setblobUrl] = useState("");
   const [listening, setlistening] = useState(false);
 
   useEffect(() => {
@@ -35,8 +34,9 @@ function App() {
     Recorder.stop()
       .getMp3()
       .then(([buffer, blob]) => {
+        console.log(blob);
         const result = URL.createObjectURL(blob);
-        setblobUrl(result);
+        console.log(result);
       })
       .catch((e) => console.error(e));
   };
@@ -49,7 +49,6 @@ function App() {
       <button onClick={onStopRecording} disabled={!listening}>
         Stop
       </button>
-      <audio src={blobUrl} control="controls" />
     </React.Fragment>
   );
 }
