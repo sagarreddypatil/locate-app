@@ -111,7 +111,7 @@ def tts():
 
     content = request.json
     if content is None:
-        return "Dude what the hell"
+        return "No Content", 400
 
     text = content["text"]
     print(f"TTS Request: {text}")
