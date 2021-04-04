@@ -9,6 +9,13 @@ from pydub import AudioSegment
 
 from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
 
+import torch
+import soundfile as sf
+from univoc import Vocoder
+from tacotron import load_cmudict, text_to_id, Tacotron
+
+from cStringIO import StringIO
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 app = Flask(__name__)
@@ -24,6 +31,13 @@ model = AutoModelForQuestionAnswering.from_pretrained(
 )
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-distilled-squad")
 qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
+item_stopwords = ["my", "the", "a"]
+
+
+def normalize_item(item: str):
+    return " ".join(
+        [word for word in item.split() if word.lower() not in item_stopwords]
+    )
 
 
 def extract_item_loc(sentence: str):
@@ -33,9 +47,27 @@ def extract_item_loc(sentence: str):
     return item.lower(), location.lower()
 
 
+vocoder = Vocoder.from_pretrained(
+    "https://github.com/bshall/UniversalVocoding/releases/download/v0.2/univoc-ljspeech-7mtpaq.pt"
+).cuda()
+tacotron = Tacotron.from_pretrained(
+    "https://github.com/bshall/Tacotron/releases/download/v0.1/tacotron-ljspeech-yspjx3.pt"
+).cuda()
+cmudict = load_cmudict()
+
+
+def do_tts(text: str):
+    x = torch.LongTensor(text_to_id(text, cmudict)).unsqueeze(0).cuda()
+    with torch.no_grad():
+        mel, _ = tacotron.generate(x)
+        wav, sr = vocoder.generate(mel.transpose(1, 2))
+
+    return wav, sr
+
+
 @app.route("/input", methods=["POST"])
 def process_input():
-    uid = randint(0, 99999)
+    uid = f"tmp-{randint(0, 99999)}"
 
     blob = request.get_data()
     with open(f"{uid}.mp3", "wb") as file:
@@ -49,6 +81,7 @@ def process_input():
         input_trascription = recognizer.recognize_google(audio).lower()
 
     item, location = extract_item_loc(input_trascription)
+    item = normalize_item(item)
 
     response = {}
 
@@ -71,6 +104,12 @@ def process_input():
 
     print(response)
     return jsonify(response)
+
+
+@app.route("/tts")
+def tts():
+    content = request.json["text"]
+    wav, sr = do_tts(content)
 
 
 @app.route("/")

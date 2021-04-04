@@ -1,3 +1,5 @@
+# From https://pypi.org/project/tacotron/
+
 import torch
 import soundfile as sf
 from univoc import Vocoder
@@ -16,7 +18,7 @@ tacotron = Tacotron.from_pretrained(
 # load cmudict and add pronunciation of PyTorch
 cmudict = load_cmudict()
 
-text = "I am going to murder you in your sleep."
+text = "Hello there, this is General Obi-Wan Kenobi of the Grand Army of the Republic."
 
 # convert text to phone ids
 x = torch.LongTensor(text_to_id(text, cmudict)).unsqueeze(0).cuda()
@@ -25,6 +27,8 @@ x = torch.LongTensor(text_to_id(text, cmudict)).unsqueeze(0).cuda()
 with torch.no_grad():
     mel, _ = tacotron.generate(x)
     wav, sr = vocoder.generate(mel.transpose(1, 2))
+
+print(wav)
 
 # save output
 sf.write("out.wav", wav, sr)
