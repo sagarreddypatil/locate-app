@@ -1,8 +1,88 @@
-#container {
-  display: flex;
+.background {
+  background-color: black;
   justify-content: center;
+}
+
+.table-properties {
+  color: white;
+  background-color: black;
+  justify-content: center;
+}
+
+.table-cell {
+  outline: auto;
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+
+.title-header {
   text-align: center;
-  align-items: center;
-  height: 500px;
-  background-color: red;
+  font: bold;
+  font-size: 64px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  margin: 0%;
+  justify-content: center;
+}
+
+.record-section {
+  justify-content: center;
+}
+
+.start-stop-buttons {
+  margin-top: 15px;
+  background-color: #0066ff;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  margin-left: 15px;
+  margin-right: 15px;
+  border-radius: 8px;
+  justify-content: center;
+  margin: 0 auto;
+  display: block;
+}
+
+button:hover {
+  border: 2px solid whitesmoke;
+  background-color: #2970ff;
+  color: #ffffff;
+  border-radius: 8px;
+}
+
+button:active {
+  border: 2px solid whitesmoke;
+  background-color: #2970ff;
+  color: #ffffff;
+  border-radius: 8px;
+}
+
+.table-of-objects {
+  text-align: center;
+  align-self: start;
+}
+
+.center-everything-pls {
+  flex-direction: column;
+  align-content: center;
+}
+
+.container {
+  width: 30%;
+  position: relative;
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.block {
+  height: 33%;
+  width: 50%;
+  display: inline-block;
+  margin: 10px;
+  justify-content: center;
 }
