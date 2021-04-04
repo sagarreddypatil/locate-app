@@ -106,7 +106,7 @@ function App() {
                 onClickNHold={onStartRecording} //Timeout callback
                 onEnd={onStopRecording}> 
                 <button className='start-stop-buttons pulsating-circle'>
-                  {listening ? <BiMicrophone className='microphone' size={64} />:<BiMicrophoneOff className='microphone' size={64}/>}
+                  {listening ? <BiMicrophone className='microphone' size={64} />:<BiMicrophoneOff className='microphone'size={64}/>}
                 </button> 
               </ClickNHold>
             </div>

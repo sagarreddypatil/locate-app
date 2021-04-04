@@ -9,10 +9,7 @@ from pydub import AudioSegment
 
 from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
 
-import torch
-import soundfile as sf
-from univoc import Vocoder
-from tacotron import load_cmudict, text_to_id, Tacotron
+from gtts import gTTS
 
 from io import BytesIO
 
@@ -27,9 +24,9 @@ sr.AudioFile("wow")
 
 
 model = AutoModelForQuestionAnswering.from_pretrained(
-    "distilbert-base-uncased-distilled-squad"
+    "distilbert-base-cased-distilled-squad"
 )
-tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-distilled-squad")
+tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
 qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
 item_stopwords = ["my", "the", "a"]
 
@@ -47,22 +44,22 @@ def extract_item_loc(sentence: str):
     return item.lower(), location.lower()
 
 
-vocoder = Vocoder.from_pretrained(
-    "https://github.com/bshall/UniversalVocoding/releases/download/v0.2/univoc-ljspeech-7mtpaq.pt"
-).cuda()
-tacotron = Tacotron.from_pretrained(
-    "https://github.com/bshall/Tacotron/releases/download/v0.1/tacotron-ljspeech-yspjx3.pt"
-).cuda()
-cmudict = load_cmudict()
+def do_tts(text: str, filename: str):
+    voice = gTTS(text)
+    voice.save(filename)
 
 
-def do_tts(text: str):
-    x = torch.LongTensor(text_to_id(text, cmudict)).unsqueeze(0).cuda()
-    with torch.no_grad():
-        mel, _ = tacotron.generate(x)
-        wav, sr = vocoder.generate(mel.transpose(1, 2))
-
-    return wav, sr
+def text_is_question(text: str):
+    query = text.lower()
+    if (
+        query.startswith("what")
+        or query.startswith("where")
+        or query.startswith("which")
+        or query.startswith("why")
+        or query.startswith("how")
+    ):
+        return True
+    return False
 
 
 @app.route("/input", methods=["POST"])
@@ -78,14 +75,16 @@ def process_input():
 
     with sr.AudioFile(f"{uid}.wav") as source:
         audio = recognizer.record(source)
-        input_trascription = recognizer.recognize_google(audio).lower()
+        input_trascription = recognizer.recognize_google(audio)
 
     item, location = extract_item_loc(input_trascription)
     item = normalize_item(item)
 
     response = {}
 
-    if input_trascription.split()[0].strip().lower() == "where":
+    if input_trascription.split()[0].strip().lower().startswith(
+        "where"
+    ) or text_is_question(location):
         response = {
             "type": "retrieval",
             "transcription": input_trascription,
@@ -106,19 +105,24 @@ def process_input():
     return jsonify(response)
 
 
-@app.route("/tts")
+@app.route("/tts", methods=["POST"])
 def tts():
     uid = f"tmp-send-{randint(0, 999999)}"
 
-    content = request.json["text"]
-    wav, sr = do_tts(content)
+    content = request.json
+    if content is None:
+        return "No Content", 400
 
-    sf.write(f"{uid}.wav", wav, sr)
-    with open(f"{uid}.wav", "rb") as file:
-        wav_file = file.read()
-    os.remove(f"{uid}.wav")
+    text = content["text"]
+    print(f"TTS Request: {text}")
+    do_tts(text, f"{uid}.mp3")
 
-    return send_file(BytesIO(wav_file), mimetype="audio/wav")
+    with open(f"{uid}.mp3", "rb") as file:
+        mp3_file = file.read()
+
+    os.remove(f"{uid}.mp3")
+
+    return send_file(BytesIO(mp3_file), mimetype="audio/mpeg")
 
 
 @app.route("/")
